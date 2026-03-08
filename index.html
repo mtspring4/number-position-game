@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>なんばんめかな？</title>
+    <style>
+        :root {
+            --primary-color: #ff9800;
+            --bg-color: #fff9f0;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --success-color: #4CAF50;
+            --marker-order: #ffcc80; 
+            --marker-count: #c8e6c9; 
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            touch-action: manipulation; user-select: none;
+            overflow: hidden; min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #game-app {
+            width: 100%; max-width: 500px; min-height: 100vh;
+            display: flex; flex-direction: column; position: relative;
+            background-color: var(--bg-color); z-index: 1;
+        }
+
+        .screen { display: none; flex-direction: column; align-items: center; padding: 20px; flex-grow: 1; box-sizing: border-box; }
+        .screen.active { display: flex; }
+
+        /* タイトル */
+        #title-screen { justify-content: center; background: linear-gradient(180deg, #fff9f0 0%, #ffe0b2 100%); }
+        .title-logo { font-size: 2.5rem; font-weight: bold; color: var(--primary-color); text-shadow: 2px 2px 0 white; margin-bottom: 40px; text-align: center; }
+        .title-animal-deco { font-size: 4rem; margin-bottom: 30px; animation: bounce 2s infinite; }
+        .start-btn { background-color: #ff5722; color: white; border: none; padding: 20px 60px; font-size: 1.8rem; border-radius: 50px; font-weight: bold; box-shadow: 0 6px 0 #d84315; cursor: pointer; z-index: 10; transition: transform 0.1s; }
+        .start-btn:active { transform: translateY(4px) scale(0.98); box-shadow: none; }
+
+        /* ゲームメイン */
+        .game-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .progress-badge { background: var(--primary-color); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+        .question-box { background: var(--card-bg); border: 3px solid #ffcc80; border-radius: 20px; padding: 20px 15px; margin-bottom: 15px; font-size: 1.3rem; width: 100%; box-sizing: border-box; text-align: center; line-height: 1.6; }
+        
+        .marker { display: inline-block; position: relative; font-weight: bold; padding: 0 4px; z-index: 1; }
+        .marker::after { content: ''; position: absolute; bottom: 2px; left: 0; width: 0; height: 1.2em; z-index: -1; transition: width 0.6s ease-out; border-radius: 4px; }
+        .marker.active::after { width: 100%; }
+        .marker-order::after { background-color: var(--marker-order); }
+        .marker-count::after { background-color: var(--marker-count); }
+
+        .animal-row-container { width: 100%; margin: 15px 0; background: #fff; padding: 25px 10px; border-radius: 15px; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; position: relative; border: 2px solid #eee; }
+        
+        .direction-labels { display: flex; justify-content: space-between; margin-bottom: 12px; padding: 0 15px; }
+        .direction-labels span { 
+            font-weight: 800; 
+            color: #888; 
+            font-size: 1.2rem; 
+            background: #f0f0f0;
+            padding: 4px 12px;
+            border-radius: 10px;
+        }
+        
+        .animal-row { display: flex; justify-content: center; gap: 8px; font-size: 2.8rem; }
+        
+        .animal-unit { cursor: pointer; display: inline-block; transition: transform 0.2s; position: relative; z-index: 2; }
+        
+        /* アニメーション強化 */
+        .act-jump { animation: jump 0.4s ease; }
+        .act-spin { animation: spin 0.5s ease-in-out; }
+        .act-shake { animation: shake 0.4s ease-in-out; }
+        
+        /* 対象の動物専用アニメーション */
+        .act-super-react { animation: super-react 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10; }
+
+        @keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        
+        @keyframes super-react { 
+            0% { transform: scale(1); } 
+            30% { transform: scale(1.8) rotate(-15deg); } 
+            60% { transform: scale(1.6) rotate(15deg); } 
+            100% { transform: scale(1) rotate(0); } 
+        }
+
+        .button-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 10px; width: 100%; }
+        .num-btn { aspect-ratio: 1/1; border-radius: 50%; border: none; background-color: var(--success-color); color: white; font-size: 1.4rem; font-weight: bold; box-shadow: 0 5px 0 #2E7D32; display: flex; align-items: center; justify-content: center; }
+        .num-btn:active { transform: translateY(4px); box-shadow: none; }
+
+        /* リザルト画面 */
+        #result-screen { justify-content: center; background: #fff9f0; overflow: hidden; text-align: center; }
+        .result-stage { position: relative; width: 100%; height: 440px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
+        .sunburst-bg { position: absolute; width: 800px; height: 800px; z-index: 1; opacity: 0.3; background: repeating-conic-gradient(from 0deg, #ffcc80 0deg 15deg, transparent 15deg 30deg); animation: sun-rotate 20s linear infinite; }
+        @keyframes sun-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .animal-orbit { position: absolute; width: 400px; height: 400px; z-index: 15; pointer-events: none; animation: circle-rotate 12s linear infinite; }
+        @keyframes circle-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .circle-animal { position: absolute; font-size: 3rem; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); }
+
+        .final-score-card { background: rgba(255, 255, 255, 0.95); border: 6px solid var(--primary-color); border-radius: 40px; padding: 30px 15px; width: 280px; z-index: 5; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
+        .score-num { font-size: 5.5rem; color: #ff5722; font-weight: bold; line-height: 1; margin: 5px 0; }
+        .result-msg { font-size: 1.6rem; font-weight: bold; color: var(--primary-color); margin-bottom: 10px; }
+
+        /* モーダル */
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; padding: 10px; }
+        .modal-content { background: white; padding: 25px 20px; border-radius: 30px; width: 100%; max-width: 460px; text-align: center; }
+        .explanation-box { background: #fdf2e9; padding: 15px; border-radius: 20px; margin: 10px 0; position: relative; }
+        .visual-container { position: relative; margin: 35px 5px 10px 5px; padding-bottom: 10px; }
+        .explain-animals { display: flex; justify-content: center; align-items: flex-end; gap: 4px; position: relative; z-index: 2; width: 100%; }
+        .explain-item { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; }
+        .explain-num { font-size: 0.8rem; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 4px; background: #ccc; }
+        .explain-animal-icon { font-size: 1.8rem; }
+        .group-bracket { position: absolute; bottom: -8px; height: calc(100% + 15px); border: 4px solid #4caf50; border-top: none; border-radius: 0 0 15px 15px; pointer-events: none; z-index: 1; display: none; box-sizing: border-box; }
+
+        .confetti { position: fixed; width: 10px; height: 10px; top: -20px; z-index: 100; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+        
+        .sparkle { position: absolute; pointer-events: none; width: 15px; height: 15px; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); z-index: 50; animation: sparkle-fly 0.7s ease-out forwards; }
+        @keyframes sparkle-fly { 0% { transform: translate(0, 0) scale(0) rotate(0deg); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(var(--s, 1.3)) rotate(180deg); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<div id="game-app">
+    <!-- タイトル -->
+    <div id="title-screen" class="screen active">
+        <div class="title-logo">なんばんめかな？<br>どうぶつクイズ</div>
+        <div class="title-animal-deco">🐶 🐰 🐼</div>
+        <button class="start-btn" onclick="startGame()">はじめる</button>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <div id="progress-text" class="progress-badge">1 / 10</div>
+            <div id="score-text">せいかい: 0</div>
+        </div>
+        <div id="question-box" class="question-box"></div>
+        <div class="animal-row-container">
+            <div class="direction-labels">
+                <span id="label-left">ひだり</span>
+                <span id="label-right">みぎ</span>
+            </div>
+            <div id="animal-display" class="animal-row"></div>
+        </div>
+        <div id="button-area" class="button-grid"></div>
+    </div>
+
+    <!-- リザルト画面 -->
+    <div id="result-screen" class="screen">
+        <div class="result-stage">
+            <div class="sunburst-bg"></div>
+            <div id="animal-orbit" class="animal-orbit"></div>
+            <div id="score-card" class="final-score-card">
+                <h2 id="result-message" class="result-msg">がんばったね！</h2>
+                <div style="font-size: 1.1rem; font-weight: bold;">10もん ちゅう</div>
+                <div class="score-num" id="final-score">0</div>
+                <div style="font-size: 1.1rem; font-weight: bold; color: #555;">せいかい できたよ！</div>
+                <div id="final-decoration" style="font-size: 3.5rem; margin-top: 10px;">✨ 👑 ✨</div>
+            </div>
+        </div>
+        <button class="start-btn" onclick="showTitle()" style="position: relative; z-index: 20;">もういっかい！</button>
+    </div>
+
+    <!-- モーダル -->
+    <div id="modal-overlay">
+        <div class="modal-content">
+            <div id="result-icon" style="font-size: 4rem; margin-bottom: 5px;">⭕️</div>
+            <div id="result-feedback" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 10px;">せいかい！</div>
+            <div class="explanation-box">
+                <div id="answer-sentence" style="font-size: 1.3rem; font-weight: bold; margin-bottom: 15px;"></div>
+                <div id="guide-area" style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-weight: bold;">
+                    <span id="guide-start-text"></span>
+                    <div id="guide-line" style="height:4px; margin:0 10px; flex-grow:1; position:relative;"></div>
+                    <span style="font-size:0.9rem;">かぞえるよ</span>
+                </div>
+                <div class="visual-container">
+                    <div id="group-label" style="position: absolute; top: -30px; font-weight: bold; text-align: center; z-index: 3;"></div>
+                    <div id="explain-visual" class="explain-animals"></div>
+                    <div id="group-bracket" class="group-bracket"></div>
+                </div>
+            </div>
+            <button id="modal-next-btn" class="next-btn" onclick="nextStep()" style="background-color: #ff5722; color: white; border: none; padding: 18px 0; width: 90%; font-size: 1.6rem; border-radius: 40px; font-weight: bold; box-shadow: 0 6px 0 #d84315; margin-top: 15px; cursor: pointer;">つぎへ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const allAnimals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐣', '🐧', '🦕', '🐙', '🦄'];
+    const directions = [
+        { type: 'left', text: 'ひだり', labels: ['ひだり', 'みぎ'], from: 'ひだり', color: '#ff5722' },
+        { type: 'right', text: 'みぎ', labels: ['ひだり', 'みぎ'], from: 'みぎ', color: '#2196f3' },
+        { type: 'front', text: 'まえ', labels: ['まえ', 'うしろ'], from: 'まえ', color: '#ff5722' },
+        { type: 'back', text: 'うしろ', labels: ['まえ', 'うしろ'], from: 'うしろ', color: '#2196f3' }
+    ];
+
+    let gameState = { questionCount: 0, correctCount: 0, maxQuestions: 10, currentQuestion: {}, confettiInterval: null };
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if (id !== 'result-screen') stopConfetti();
+    }
+
+    function showTitle() { showScreen('title-screen'); }
+    function startGame() { gameState.questionCount = 0; gameState.correctCount = 0; updateStats(); generateQuestion(); showScreen('game-screen'); }
+    function updateStats() { document.getElementById('progress-text').textContent = `${gameState.questionCount + 1} / ${gameState.maxQuestions}`; document.getElementById('score-text').textContent = `せいかい: ${gameState.correctCount}`; }
+
+    function generateQuestion() {
+        const count = Math.floor(Math.random() * 3) + 5; 
+        const shuffled = [...allAnimals].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, count);
+        const dirObj = directions[Math.floor(Math.random() * directions.length)];
+        const qIdx = gameState.questionCount + 1;
+        let qType = (qIdx <= 4) ? 0 : ((qIdx % 2 === 1) ? 1 : 0);
+
+        let targetIdx;
+        const isReverse = (dirObj.type === 'right' || dirObj.type === 'back');
+        if (qType === 1) {
+            targetIdx = isReverse ? Math.floor(Math.random() * (count - 1)) : Math.floor(Math.random() * (count - 1)) + 1;
+        } else {
+            targetIdx = Math.floor(Math.random() * (count - 2)) + 1;
+        }
+
+        let answer = (qType === 0) 
+            ? ((dirObj.type === 'left' || dirObj.type === 'front') ? targetIdx + 1 : count - targetIdx)
+            : ((dirObj.type === 'left' || dirObj.type === 'front') ? targetIdx : count - 1 - targetIdx);
+
+        gameState.currentQuestion = { type: qType, animals: selected, direction: dirObj, target: selected[targetIdx], targetIndex: targetIdx, answer: answer, totalCount: count };
+        renderUI();
+    }
+
+    function renderUI() {
+        const q = gameState.currentQuestion;
+        const qBox = document.getElementById('question-box');
+        const qNum = gameState.questionCount + 1;
+        const markerClass = (qNum >= 5) ? 'marker' : '';
+        const orderTypeClass = (qNum >= 5) ? (q.type === 0 ? 'marker-order' : 'marker-count') : '';
+        
+        qBox.innerHTML = `【もんだい】<br><span style="font-size: 2rem;">${q.target}</span> ${q.type === 0 ? 'は' : 'の'}<br><span style="color:${q.direction.color}">${q.direction.text}</span> ${q.type === 0 ? 'から' : 'に'} <span class="${markerClass} ${orderTypeClass}" id="marker-target">${q.type === 0 ? 'なんばんめ？' : 'なんにん いる？'}</span>`;
+
+        if (qNum >= 5) setTimeout(() => document.getElementById('marker-target')?.classList.add('active'), 150);
+        
+        document.getElementById('label-left').textContent = q.direction.labels[0];
+        document.getElementById('label-right').textContent = q.direction.labels[1];
+        const display = document.getElementById('animal-display');
+        display.innerHTML = '';
+        q.animals.forEach((a, idx) => { 
+            const s = document.createElement('span'); s.textContent = a; s.className = 'animal-unit';
+            s.onclick = (e) => {
+                const isTarget = (idx === q.targetIndex);
+                const rect = e.target.getBoundingClientRect();
+                const colors = isTarget ? ['#FFD700', '#FFA500', '#FFFF00', '#FF8C00', '#FF4500'] : ['#FFD700', '#FF1493', '#00BFFF', '#32CD32', '#FF4500'];
+                
+                // パーティクル生成
+                const particleCount = isTarget ? 20 : 10;
+                for (let i = 0; i < particleCount; i++) {
+                    const sp = document.createElement('div'); sp.className = 'sparkle';
+                    const angle = (i / particleCount) * Math.PI * 2; 
+                    const dist = isTarget ? 70 : 40;
+                    sp.style.setProperty('--tx', `${Math.cos(angle)*dist}px`); 
+                    sp.style.setProperty('--ty', `${Math.sin(angle)*dist}px`);
+                    if(isTarget) sp.style.setProperty('--s', '1.8');
+                    sp.style.background = colors[i % colors.length]; 
+                    sp.style.left = `${rect.left + rect.width/2}px`; 
+                    sp.style.top = `${rect.top + rect.height/2}px`;
+                    document.body.appendChild(sp); setTimeout(() => sp.remove(), 700);
+                }
+                
+                // 特別なリアクション
+                if (isTarget) {
+                    e.target.classList.add('act-super-react'); 
+                    setTimeout(() => e.target.classList.remove('act-super-react'), 600);
+                } else {
+                    const act = ['act-jump', 'act-spin', 'act-shake'][Math.floor(Math.random()*3)];
+                    e.target.classList.add(act); 
+                    setTimeout(() => e.target.classList.remove(act), 600);
+                }
+            };
+            display.appendChild(s); 
+        });
+        
+        const btnArea = document.getElementById('button-area');
+        btnArea.innerHTML = '';
+        const maxBtn = (q.type === 1) ? q.totalCount - 1 : q.totalCount;
+        for (let i = 1; i <= maxBtn; i++) {
+            const b = document.createElement('button'); b.className = 'num-btn'; b.innerHTML = i; b.onclick = () => checkAnswer(i); btnArea.appendChild(b);
+        }
+    }
+
+    function checkAnswer(selected) {
+        const q = gameState.currentQuestion;
+        const isCorrect = selected === q.answer;
+        if (isCorrect) gameState.correctCount++;
+        document.getElementById('result-icon').textContent = isCorrect ? '⭕️' : '❌';
+        document.getElementById('result-feedback').textContent = isCorrect ? 'せいかい！' : 'おしい！';
+        const color = q.direction.color;
+        const sentence = document.getElementById('answer-sentence');
+        sentence.innerHTML = q.type === 0 
+            ? `${q.target} は <span style="color:${color}">${q.direction.text}</span> から <span style="font-size:1.6rem">${q.answer}</span> ばんめ`
+            : `${q.target} の <span style="color:${color}">${q.direction.text}</span> に <span style="font-size:1.6rem">${q.answer}</span> にん いるよ`;
+
+        const isReverse = (q.direction.type === 'right' || q.direction.type === 'back');
+        const guideArea = document.getElementById('modal-overlay').querySelector('.explanation-box > div:nth-child(2)'); 
+        if (q.type === 0) {
+            guideArea.style.display = 'flex';
+            document.getElementById('guide-start-text').textContent = isReverse ? q.direction.labels[1] : q.direction.labels[0];
+            const line = document.getElementById('guide-line');
+            line.style.background = color;
+            guideArea.style.flexDirection = isReverse ? 'row-reverse' : 'row';
+            let style = document.getElementById('dyn-css') || document.createElement('style');
+            style.id = 'dyn-css'; document.head.appendChild(style);
+            style.innerHTML = `.guide-arrow div::after, #guide-line::after { content:''; position:absolute; top:-6px; ${isReverse?'left':'right'}:-5px; border-${isReverse?'right':'left'}:12px solid ${color}; border-${isReverse?'left':'right'}:none; border-top:8px solid transparent; border-bottom:8px solid transparent; }`;
+        } else { guideArea.style.display = 'none'; }
+
+        const visual = document.getElementById('explain-visual');
+        visual.innerHTML = '';
+        let count = 0;
+        q.animals.forEach((a, idx) => {
+            const item = document.createElement('div'); item.className = 'explain-item' + (idx === q.targetIndex ? ' explain-target' : '');
+            const num = document.createElement('div'); num.className = 'explain-num';
+            if (q.type === 0) {
+                num.textContent = isReverse ? (q.animals.length - idx) : (idx + 1);
+                if (isReverse ? (idx >= q.targetIndex) : (idx <= q.targetIndex)) num.style.background = color;
+            } else {
+                if ((!isReverse && idx < q.targetIndex) || (isReverse && idx > q.targetIndex)) {
+                    count++; num.textContent = count; num.style.background = '#4caf50';
+                } else { num.textContent = idx === q.targetIndex ? '★' : ''; if (idx === q.targetIndex) num.style.background = color; }
+            }
+            const icon = document.createElement('div'); icon.className = 'explain-animal-icon'; icon.textContent = a;
+            item.appendChild(num); item.appendChild(icon); visual.appendChild(item);
+        });
+
+        const bracket = document.getElementById('group-bracket');
+        const groupLabel = document.getElementById('group-label');
+        if (q.type === 1 && q.answer > 0) {
+            bracket.style.display = 'block'; groupLabel.style.display = 'block';
+            groupLabel.textContent = q.direction.text; groupLabel.style.color = '#4caf50';
+            setTimeout(() => {
+                const items = document.querySelectorAll('.explain-item');
+                let start = !isReverse ? 0 : q.targetIndex + 1;
+                let end = !isReverse ? q.targetIndex - 1 : q.animals.length - 1;
+                const r1 = items[start].getBoundingClientRect(); const r2 = items[end].getBoundingClientRect();
+                const pr = visual.getBoundingClientRect();
+                bracket.style.left = (r1.left - pr.left) + 'px'; bracket.style.width = (r2.right - r1.left) + 'px';
+                groupLabel.style.left = bracket.style.left; groupLabel.style.width = bracket.style.width;
+            }, 50);
+        } else { bracket.style.display = 'none'; groupLabel.style.display = 'none'; }
+        document.getElementById('modal-overlay').style.display = 'flex';
+    }
+
+    function nextStep() { document.getElementById('modal-overlay').style.display = 'none'; gameState.questionCount++; if (gameState.questionCount >= gameState.maxQuestions) showResult(); else { updateStats(); generateQuestion(); } }
+
+    function showResult() {
+        const s = gameState.correctCount;
+        document.getElementById('final-score').textContent = s;
+        const msg = document.getElementById('result-message');
+        const deco = document.getElementById('final-decoration');
+        
+        const orbit = document.getElementById('animal-orbit');
+        orbit.innerHTML = '';
+        const selectedAnimals = [...allAnimals].sort(() => 0.5 - Math.random()).slice(0, 8);
+        selectedAnimals.forEach((a, i) => {
+            const el = document.createElement('div');
+            el.className = 'circle-animal';
+            el.textContent = a;
+            const angle = (i / 8) * (Math.PI * 2);
+            const radius = 200; 
+            el.style.left = (200 + Math.cos(angle) * radius - 30) + 'px';
+            el.style.top = (200 + Math.sin(angle) * radius - 30) + 'px';
+            el.style.transform = `rotate(${(angle * 180 / Math.PI) + 90}deg)`;
+            orbit.appendChild(el);
+        });
+
+        if (s === 10) { msg.textContent = "パーフェクト！てんさい！"; deco.textContent = "🏆 👑 🏆"; startConfetti(true); }
+        else if (s >= 7) { msg.textContent = "すごい！ばっちりだね！"; deco.textContent = "✨ 🦁 ✨"; startConfetti(false); }
+        else { msg.textContent = "よく がんばったね！"; deco.textContent = "🍀 🐥 🍀"; startConfetti(false); }
+        
+        showScreen('result-screen');
+    }
+
+    function startConfetti(p) { 
+        stopConfetti(); 
+        gameState.confettiInterval = setInterval(() => {
+            const c = document.createElement('div'); c.className = 'confetti';
+            c.style.backgroundColor = (p ? ['#ffd700', '#fffacd', '#daa520'] : ['#ff9800', '#ff5722', '#4CAF50', '#2196f3'])[Math.floor(Math.random()*3)];
+            c.style.left = Math.random() * 100 + 'vw'; c.style.animation = `fall ${Math.random()*3+2}s linear forwards`;
+            document.body.appendChild(c); setTimeout(() => c.remove(), 5000);
+        }, p ? 40 : 120); 
+    }
+    function stopConfetti() { if (gameState.confettiInterval) clearInterval(gameState.confettiInterval); document.querySelectorAll('.confetti').forEach(c => c.remove()); }
+
+    window.onload = showTitle;
+</script>
+
+</body>
+</html>
+
