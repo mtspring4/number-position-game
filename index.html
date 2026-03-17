@@ -33,6 +33,12 @@
         }
 
         .screen { display: none; flex-direction: column; align-items: center; padding: 20px; flex-grow: 1; box-sizing: border-box; }
+
+        /* ↓ここに追加！ */
+        #game-screen {
+            padding-top: 40px; /* 好みで20〜40pxくらい調整 */
+        }
+        
         .screen.active { display: flex; }
 
         /* タイトル */
@@ -129,7 +135,7 @@
 <div id="game-app">
     <!-- タイトル -->
     <div id="title-screen" class="screen active">
-        <div class="title-logo">なんばんめかな？<br>どうぶつクイズ</div>
+        <div class="title-logo">さんすうクイズ<br>なんばんめかな？</div>
         <div class="title-animal-deco">🐶 🐰 🐼</div>
         <button class="start-btn" onclick="startGame()">はじめる</button>
     </div>
