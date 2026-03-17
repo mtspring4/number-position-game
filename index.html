@@ -54,38 +54,51 @@
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
         /* ゲーム画面 */
-        #game-screen { justify-content: space-between; padding-bottom: 30px; }
+        #game-screen { 
+            justify-content: space-between; 
+            padding-bottom: 20px; 
+            padding-top: 40px; /* 上部に2行分ほどの余白を追加 */
+        }
         .game-top { width: 100%; }
-        .game-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .game-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .progress-badge { background: var(--primary-color); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 1rem; }
         
         .question-box { 
             background: var(--card-bg); border: 4px solid #ffcc80; border-radius: 20px; 
-            padding: 10px; margin-bottom: 10px; width: 100%; text-align: center; 
+            padding: 15px 10px; margin-bottom: 15px; width: 100%; text-align: center; 
             box-shadow: 0 4px 0 #ffe0b2;
         }
-        .question-label-in { font-size: 1rem; font-weight: 900; color: #ff5722; margin-bottom: 5px; border-bottom: 2px dashed #ffe0b2; padding-bottom: 2px; }
-        .question-text { font-size: 1.5rem; font-weight: bold; line-height: 1.4; }
+        .question-label-in { font-size: 1rem; font-weight: 900; color: #ff5722; margin-bottom: 8px; border-bottom: 2px dashed #ffe0b2; padding-bottom: 4px; }
+        .question-text { font-size: 1.6rem; font-weight: bold; line-height: 1.4; }
 
         .animal-row-container { 
-            width: 100%; background: #fff; padding: 15px 5px; border-radius: 20px; 
+            width: 100%; background: #fff; padding: 20px 5px; border-radius: 20px; 
             display: flex; flex-direction: column; justify-content: center; 
-            position: relative; border: 2px solid #eee; margin: 10px 0;
+            position: relative; border: 2px solid #eee; margin: 15px 0;
         }
         
-        .direction-labels { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 0 10px; }
+        .direction-labels { display: flex; justify-content: space-between; margin-bottom: 15px; padding: 0 10px; }
         .direction-labels span { 
             font-weight: 800; color: #555; font-size: 1.2rem; 
             background: #f0f0f0; padding: 4px 12px; border-radius: 12px;
         }
         
-        .animal-row { display: flex; justify-content: space-around; align-items: center; width: 100%; min-height: 90px; }
+        .animal-row { display: flex; justify-content: space-around; align-items: center; width: 100%; min-height: 100px; }
         .animal-unit { cursor: pointer; font-size: clamp(2.5rem, 15vw, 4rem); transition: transform 0.2s; position: relative; z-index: 2; }
 
-        /* 数字ボタンをさらに巨大化 */
-        .button-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; padding: 5px 0; }
+        /* 数字ボタンをセンター寄せに修正 */
+        .game-bottom { width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .button-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 12px; 
+            width: 100%; 
+            max-width: 440px; /* 横幅を制限して中央に寄せる */
+            padding: 10px 0;
+            justify-content: center;
+        }
         .num-btn { 
-            aspect-ratio: 1/1; border-radius: 15px; border: none; background-color: var(--success-color); 
+            aspect-ratio: 1/1; border-radius: 18px; border: none; background-color: var(--success-color); 
             color: white; font-size: 3.5rem; font-weight: bold; box-shadow: 0 8px 0 #2E7D32; 
             display: flex; align-items: center; justify-content: center;
             transition: transform 0.1s, box-shadow 0.1s;
@@ -136,10 +149,9 @@
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        /* 観覧車を最前面に設定 */
         .animal-ferris-wheel {
             position: absolute; top: 50%; left: 50%; width: 340px; height: 340px; transform: translate(-50%, -50%);
-            z-index: 100; /* カードよりも上に */
+            z-index: 100;
             pointer-events: none;
         }
         .ferris-item {
@@ -155,7 +167,7 @@
             background: white; border: 8px solid #ff9800; border-radius: 40px; 
             padding: 25px; width: 85%; max-width: 320px; text-align: center; 
             margin-bottom: 30px; box-shadow: 0 15px 30px rgba(255,152,0,0.3);
-            position: relative; z-index: 5; /* 観覧車の下 */
+            position: relative; z-index: 5;
         }
 
         .score-big { font-size: 6.5rem; color: #e64a19; font-weight: 900; line-height: 1; margin: 10px 0; }
@@ -181,7 +193,7 @@
         <div class="game-top">
             <div class="game-header">
                 <div id="progress-text" class="progress-badge">1 / 10</div>
-                <div id="score-text" style="font-weight: bold;">せいかい: 0</div>
+                <div id="score-text" style="font-weight: bold; color: #666;">せいかい: 0</div>
             </div>
             
             <div class="question-box">
@@ -195,14 +207,13 @@
             </div>
         </div>
         <div class="game-bottom">
-            <div style="text-align: center; font-weight: bold; color: #888; margin-bottom: 8px;">こたえをえらんでね</div>
+            <div style="text-align: center; font-weight: bold; color: #888; margin-bottom: 10px; font-size: 1.1rem;">こたえをえらんでね</div>
             <div id="button-area" class="button-grid"></div>
         </div>
     </div>
 
     <div id="result-screen" class="screen">
         <div class="sunburst"></div>
-        <!-- 演出パーツを配置 -->
         <div id="ferris-wheel" class="animal-ferris-wheel"></div>
         <div id="result-medal" style="font-size: 5.5rem; z-index:6; position:relative;">👑</div>
         <div id="result-title" style="font-size: 2.2rem; color: #ff5722; font-weight: bold; margin-bottom: 10px; z-index:6; position:relative;">すごすぎる！</div>
@@ -318,7 +329,6 @@
         
         const btnArea = document.getElementById('button-area');
         btnArea.innerHTML = '';
-        // 1から8までのボタンを作成
         for (let i = 1; i <= 8; i++) {
             const b = document.createElement('button'); b.className = 'num-btn'; b.textContent = i; 
             b.onclick = () => checkAnswer(i); btnArea.appendChild(b);
@@ -434,7 +444,7 @@
     function setupFerrisWheel() {
         const wheel = document.getElementById('ferris-wheel');
         wheel.innerHTML = '';
-        const count = 10; // 動物を少し増やして賑やかに
+        const count = 10;
         const shuffled = [...allAnimals].sort(() => 0.5 - Math.random());
         for (let i = 0; i < count; i++) {
             const item = document.createElement('div');
