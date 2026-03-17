@@ -401,9 +401,9 @@
         const medalEl = document.getElementById('result-medal');
         const titleEl = document.getElementById('result-title');
         
-        if (score === 10) { medalEl.textContent = "🥇👑🥇"; titleEl.textContent = "てんさい！パーフェクト！"; }
-        else if (score >= 7) { medalEl.textContent = "🥈✨"; titleEl.textContent = "すごい！ばっちり！"; }
-        else if (score >= 4) { medalEl.textContent = "🥉👍"; titleEl.textContent = "がんばったね！"; }
+        if (score === 10) { medalEl.textContent = "✨👑✨"; titleEl.textContent = "てんさい！<br>パーフェクト！"; }
+        else if (score >= 7) { medalEl.textContent = "🌸"; titleEl.textContent = "すごい！ばっちり！"; }
+        else if (score >= 4) { medalEl.textContent = "👌"; titleEl.textContent = "がんばったね！"; }
         else { medalEl.textContent = "💪"; titleEl.textContent = "つぎもがんばろう！"; }
         
         showScreen('result-screen');
