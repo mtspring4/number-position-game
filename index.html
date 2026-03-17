@@ -313,8 +313,8 @@
         document.getElementById('result-feedback').textContent = isCorrect ? 'せいかい！' : 'おしい！';
         const sentence = document.getElementById('answer-sentence');
         sentence.innerHTML = q.type === 0 
-            ? `${q.target} は <span style="color:${q.direction.color}">${q.direction.text}</span> から <span style="color:${q.direction.color};">${q.answer}</span> ばんめ`
-            : `${q.target} の <span style="color:${q.direction.color}">${q.direction.text}</span> には <span style="color:#4CAF50;">${q.answer}</span> にん いるよ`;
+            ? `${q.target} は <span style="color:${q.direction.color}">${q.direction.text}</span> から <span style="font-size:1.5rem; color:${q.direction.color};">${q.answer}</span> ばんめ`
+            : `${q.target} の <span style="color:${q.direction.color}">${q.direction.text}</span> には <span style="font-size:1.5rem; color:#4CAF50;">${q.answer}</span> にん いるよ`;
 
         const visual = document.getElementById('explain-visual');
         visual.innerHTML = '';
@@ -371,12 +371,12 @@
         const rect = el.getBoundingClientRect();
         for (let i = 0; i < (isTarget ? 15 : 6); i++) {
             const sp = document.createElement('div');
-            sp.style.position = 'fixed'; sp.style.width = '8px'; sp.style.height = '8px';
+            sp.style.position = 'fixed'; sp.style.width = '6px'; sp.style.height = '6px';
             sp.style.borderRadius = '50%'; sp.style.background = isTarget ? '#FFD700' : '#FF69B4';
             sp.style.left = `${rect.left + rect.width/2}px`; sp.style.top = `${rect.top + rect.height/2}px`;
             sp.style.zIndex = '1000';
             const angle = Math.random() * Math.PI * 2;
-            const speed = 2 + Math.random() * 4;
+            const speed = 2 + Math.random() * 3;
             let vx = Math.cos(angle) * speed; let vy = Math.sin(angle) * speed;
             document.body.appendChild(sp);
             let opacity = 1;
